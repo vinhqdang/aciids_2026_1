@@ -40,13 +40,17 @@ echo "==========================================================================
 echo "[1/4] Environment Setup"
 echo "================================================================================"
 
+# Initialize conda for bash shell
+echo "[$(date)] Initializing conda..."
+eval "$(conda shell.bash hook)"
+
 # Activate conda environment
 echo "[$(date)] Activating py310 environment..."
 conda activate py310 || { echo "Failed to activate py310"; exit 1; }
 
 # Install dependencies
 echo "[$(date)] Installing dependencies..."
-pip install -q torch numpy scikit-learn pandas tqdm kaggle 2>&1 | tail -5
+conda run -n py310 pip install -q torch numpy scikit-learn pandas tqdm kaggle networkx 2>&1 | tail -5
 
 echo "[$(date)] ✓ Environment ready"
 echo ""
@@ -72,7 +76,7 @@ if [ ! -f ~/.kaggle/kaggle.json ]; then
 fi
 
 echo "[$(date)] Downloading datasets (this may take 30-60 minutes)..."
-python download_datasets.py 2>&1 | grep -E "(Downloading|Extracting|✓|✗|ERROR)"
+conda run -n py310 python download_datasets.py 2>&1 | grep -E "(Downloading|Extracting|✓|✗|ERROR)"
 
 # Check if downloads succeeded
 if [ -f data/paysim/PS_20174392719_1491204439457_log.csv ]; then
@@ -95,7 +99,7 @@ echo "This will take 1-3 hours depending on hardware..."
 echo ""
 
 # Run main experiments
-python run_all_experiments.py --output results_experiment.json 2>&1
+conda run -n py310 python run_all_experiments.py --output results_experiment.json 2>&1
 
 echo ""
 echo "[$(date)] ✓ Experiments completed"
@@ -109,7 +113,7 @@ echo "[4/4] Generating Results Report"
 echo "================================================================================"
 
 echo "[$(date)] Compiling comprehensive results..."
-python generate_final_report.py --output "$OUTPUT_FILE"
+conda run -n py310 python generate_final_report.py --output "$OUTPUT_FILE"
 
 echo ""
 echo "[$(date)] ✓ Report generated: $OUTPUT_FILE"
