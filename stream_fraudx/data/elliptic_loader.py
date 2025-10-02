@@ -12,7 +12,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
 import networkx as nx
 
 
@@ -212,6 +212,3 @@ if __name__ == '__main__':
         print(f"\n{e}")
         print("\nTo download the dataset, run:")
         print("  python -c 'from stream_fraudx.data.elliptic_loader import download_elliptic; download_elliptic()'")
-
-
-from typing import Optional  # Add proper import
