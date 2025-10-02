@@ -24,7 +24,8 @@ echo "Logs will be written to: $LOG_FILE"
 echo ""
 echo "Estimated time: 2-4 hours (depending on download speed)"
 echo ""
-read -p "Press Enter to continue or Ctrl+C to cancel..."
+echo "Starting in 3 seconds..."
+sleep 3
 
 # Redirect all output to both console and log file
 exec > >(tee -a "$LOG_FILE") 2>&1
