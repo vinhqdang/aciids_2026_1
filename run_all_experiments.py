@@ -236,24 +236,7 @@ def main(args):
 
     all_results = []
 
-    # Experiment 1: Synthetic Data (small, for quick validation)
-    print("\n" + "="*80)
-    print("Experiment 1: Synthetic Data (Validation)")
-    print("="*80)
-
-    synthetic_dataset = SyntheticFraudDataset(
-        num_samples=5000,
-        num_nodes=500,
-        fraud_rate=0.05,
-        num_continuous=10,
-        num_categorical=5,
-        seed=42
-    )
-
-    results = run_on_dataset('Synthetic', synthetic_dataset, device, batch_size=128)
-    all_results.extend(results)
-
-    # Try real datasets if available
+    # Real datasets only - no synthetic data
     datasets_to_try = [
         ('PaySim', 'stream_fraudx.data.paysim_loader', 'PaySimDataset',
          {'data_dir': 'data/paysim', 'fraction': 0.05}),  # 5% for speed

@@ -80,8 +80,14 @@ chmod 600 ~/.kaggle/kaggle.json 2>/dev/null
 echo "[$(date)] Kaggle API configured"
 
 echo "[$(date)] Downloading datasets (this may take 30-60 minutes)..."
-echo "Note: If download fails, experiments will run on synthetic data only"
-conda run -n py310 python download_datasets.py 2>&1 | grep -E "(Downloading|Extracting|✓|✗|ERROR)" || echo "[$(date)] ⚠ Download had issues, continuing with available data"
+echo ""
+echo "IMPORTANT: If you see 403 Forbidden errors, you must accept dataset terms:"
+echo "  1. IEEE-CIS: https://www.kaggle.com/c/ieee-fraud-detection/rules"
+echo "  2. PaySim: https://www.kaggle.com/datasets/ealaxi/paysim1"
+echo "  3. Elliptic: https://www.kaggle.com/datasets/ellipticco/elliptic-data-set"
+echo ""
+
+conda run -n py310 python download_datasets.py 2>&1
 
 # Check what datasets are available
 DATASETS_FOUND=0
@@ -99,7 +105,10 @@ if [ -f data/elliptic/elliptic_txs_features.csv ]; then
 fi
 
 if [ $DATASETS_FOUND -eq 0 ]; then
-    echo "[$(date)] ⚠ No real datasets found, will use synthetic data only"
+    echo ""
+    echo "ERROR: No real datasets found!"
+    echo "Please accept dataset terms on Kaggle (see URLs above) and re-run."
+    exit 1
 else
     echo "[$(date)] Found $DATASETS_FOUND real dataset(s)"
 fi
