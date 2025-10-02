@@ -75,14 +75,33 @@ if [ ! -f ~/.kaggle/kaggle.json ]; then
     exit 1
 fi
 
-echo "[$(date)] Downloading datasets (this may take 30-60 minutes)..."
-conda run -n py310 python download_datasets.py 2>&1 | grep -E "(Downloading|Extracting|✓|✗|ERROR)"
+# Fix permissions if needed
+chmod 600 ~/.kaggle/kaggle.json 2>/dev/null
+echo "[$(date)] Kaggle API configured"
 
-# Check if downloads succeeded
+echo "[$(date)] Downloading datasets (this may take 30-60 minutes)..."
+echo "Note: If download fails, experiments will run on synthetic data only"
+conda run -n py310 python download_datasets.py 2>&1 | grep -E "(Downloading|Extracting|✓|✗|ERROR)" || echo "[$(date)] ⚠ Download had issues, continuing with available data"
+
+# Check what datasets are available
+DATASETS_FOUND=0
+if [ -f data/ieee-cis/train_transaction.csv ]; then
+    echo "[$(date)] ✓ IEEE-CIS dataset ready"
+    DATASETS_FOUND=$((DATASETS_FOUND + 1))
+fi
 if [ -f data/paysim/PS_20174392719_1491204439457_log.csv ]; then
     echo "[$(date)] ✓ PaySim dataset ready"
+    DATASETS_FOUND=$((DATASETS_FOUND + 1))
+fi
+if [ -f data/elliptic/elliptic_txs_features.csv ]; then
+    echo "[$(date)] ✓ Elliptic dataset ready"
+    DATASETS_FOUND=$((DATASETS_FOUND + 1))
+fi
+
+if [ $DATASETS_FOUND -eq 0 ]; then
+    echo "[$(date)] ⚠ No real datasets found, will use synthetic data only"
 else
-    echo "[$(date)] ⚠ PaySim download may have failed, will use synthetic data as fallback"
+    echo "[$(date)] Found $DATASETS_FOUND real dataset(s)"
 fi
 
 echo ""
