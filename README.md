@@ -58,26 +58,103 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 ## Quick Start
 
-### Training on Synthetic Data
+### ⚡ One-Command Execution (Recommended)
 
-Run the complete training pipeline with a single command:
+Run the **complete experimental pipeline** with a single command:
+
+```bash
+./run_all.sh
+```
+
+This will:
+1. Setup environment and install dependencies
+2. Download real fraud detection datasets (IEEE-CIS, PaySim, Elliptic)
+3. Run experiments on all datasets (STREAM-FraudX + baselines)
+4. Generate comprehensive results report
+
+**Output**: `RESULTS_FINAL.md` (comprehensive results) and `run_all.log` (full execution log)
+
+**Time**: 2-4 hours (depending on download speed and hardware)
+
+**Prerequisites**:
+- Kaggle API configured (see Datasets section below)
+- CUDA GPU recommended (but not required)
+
+### Alternative: Individual Steps
+
+**Step 1: Download Datasets**
+```bash
+conda activate py310
+python download_datasets.py
+```
+
+**Step 2: Run Experiments**
+```bash
+python run_all_experiments.py --output results_experiment.json
+```
+
+**Step 3: Generate Report**
+```bash
+python generate_final_report.py --input results_experiment.json --output RESULTS_FINAL.md
+```
+
+### Training on Synthetic Data Only (Quick Test)
+
+For fast validation without real datasets:
 
 ```bash
 python main.py --epochs 50 --batch_size 256 --output_dir outputs
 ```
 
-### Custom Configuration
+## Datasets
+
+STREAM-FraudX is evaluated on **3 real-world fraud detection datasets**:
+
+### 1. IEEE-CIS Fraud Detection
+- **Source**: [Kaggle Competition](https://www.kaggle.com/c/ieee-fraud-detection)
+- **Size**: 590K transactions
+- **Fraud Rate**: 3.5%
+- **Best For**: Rich categorical features, device/email patterns
+
+### 2. PaySim Mobile Money
+- **Source**: [Kaggle Dataset](https://www.kaggle.com/datasets/ealaxi/paysim1)
+- **Size**: 6.3M transactions
+- **Fraud Rate**: 0.13%
+- **Best For**: Temporal drift, streaming simulation
+
+### 3. Elliptic Bitcoin Transactions
+- **Source**: [Kaggle Dataset](https://www.kaggle.com/datasets/ellipticco/elliptic-data-set)
+- **Size**: 203K nodes, 234K edges
+- **Fraud Rate**: 21% (labeled subset)
+- **Best For**: Graph structure, temporal evolution
+
+See [DATASETS.md](DATASETS.md) for detailed dataset descriptions.
+
+### Kaggle API Setup
+
+To download datasets, configure the Kaggle API:
 
 ```bash
-python main.py \
-  --num_samples 20000 \
-  --num_nodes 2000 \
-  --fraud_rate 0.02 \
-  --epochs 100 \
-  --batch_size 512 \
-  --learning_rate 0.001 \
-  --use_adapters \
-  --output_dir outputs/experiment1
+# 1. Install Kaggle API
+conda activate py310
+pip install kaggle
+
+# 2. Create API token
+# Visit: https://www.kaggle.com/account
+# Click "Create New API Token" (downloads kaggle.json)
+
+# 3. Setup credentials
+mkdir -p ~/.kaggle
+mv ~/Downloads/kaggle.json ~/.kaggle/
+chmod 600 ~/.kaggle/kaggle.json
+
+# 4. Accept dataset rules on Kaggle website
+# - IEEE-CIS: https://www.kaggle.com/c/ieee-fraud-detection
+# - PaySim: https://www.kaggle.com/datasets/ealaxi/paysim1
+# - Elliptic: https://www.kaggle.com/datasets/ellipticco/elliptic-data-set
+
+# 5. Verify setup
+python download_datasets.py --verify-only
 ```
 
 ## Project Structure
