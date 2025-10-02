@@ -44,8 +44,19 @@ class SyntheticFraudDataset(Dataset):
         base_times = torch.linspace(0, 86400, num_samples)  # One day
         data['timestamps'] = base_times + torch.randn(num_samples) * 100
 
-        # Edge attributes (for graph)
+        # Edge attributes (for graph) - continuous features
         data['edge_attrs'] = torch.randn(num_samples, 64)
+
+        # Discrete edge attributes for MEM pretraining
+        amount_bins = torch.clamp((torch.abs(torch.randn(num_samples)) * 10).long(), 0, 49)  # 50 bins
+        mcc_bins = torch.randint(0, 20, (num_samples,))  # 20 MCC categories
+        device_types = torch.randint(0, 10, (num_samples,))  # 10 device types
+
+        data['edge_attr_discrete'] = {
+            'amount_bin': amount_bins,
+            'mcc_bin': mcc_bins,
+            'device_type': device_types
+        }
 
         # Continuous features (amounts, etc.)
         continuous = torch.randn(num_samples, num_continuous)
@@ -89,7 +100,13 @@ class SyntheticFraudDataset(Dataset):
         return self.num_samples
 
     def __getitem__(self, idx) -> Dict[str, torch.Tensor]:
-        return {k: v[idx] for k, v in self.data.items()}
+        item = {}
+        for k, v in self.data.items():
+            if k == 'edge_attr_discrete':
+                item[k] = {attr_name: attr_val[idx] for attr_name, attr_val in v.items()}
+            else:
+                item[k] = v[idx]
+        return item
 
 
 def collate_fn(batch):
@@ -97,5 +114,11 @@ def collate_fn(batch):
     keys = batch[0].keys()
     collated = {}
     for key in keys:
-        collated[key] = torch.stack([item[key] for item in batch])
+        if key == 'edge_attr_discrete':
+            # Handle nested dictionary
+            collated[key] = {}
+            for attr_name in batch[0][key].keys():
+                collated[key][attr_name] = torch.stack([item[key][attr_name] for item in batch])
+        else:
+            collated[key] = torch.stack([item[key] for item in batch])
     return collated

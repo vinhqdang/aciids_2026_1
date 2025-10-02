@@ -6,7 +6,7 @@ Implements bottleneck adapters for fast drift adaptation.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List
+from typing import List, Optional
 
 
 class BottleneckAdapter(nn.Module):
@@ -202,6 +202,3 @@ class AdapterConfig:
         self.use_fusion_adapters = use_fusion_adapters
         self.reduction_factor = reduction_factor
         self.dropout = dropout
-
-
-from typing import Optional  # Add this import at the top

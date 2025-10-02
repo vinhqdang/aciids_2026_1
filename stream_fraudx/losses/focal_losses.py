@@ -115,6 +115,7 @@ class FocalTverskyLoss(nn.Module):
             loss: scalar or (batch_size,) depending on reduction
         """
         probs = torch.sigmoid(logits)
+        targets = targets.float()  # Ensure float type
 
         # True positives, false positives, false negatives
         tp = (probs * targets).sum()

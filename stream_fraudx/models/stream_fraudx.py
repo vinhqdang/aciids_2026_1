@@ -107,8 +107,9 @@ class STREAMFraudX(nn.Module):
 
         # ===== Adapters (optional) =====
         if use_adapters:
+            # Graph adapter needs to match output dimension (2*node_dim)
             self.graph_adapters = GraphTowerAdapters(
-                node_dim=graph_node_dim,
+                node_dim=graph_node_dim * 2,  # Graph tower outputs concatenated src+dst
                 num_layers=graph_num_layers,
                 reduction_factor=adapter_reduction_factor
             )

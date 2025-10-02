@@ -55,20 +55,21 @@ class STREAMFraudXTrainer:
             batch = {k: v.to(self.device) if torch.is_tensor(v) else v
                     for k, v in batch.items()}
 
-            # Forward pass
-            logits = self.model(batch)
+            # Forward pass (get embeddings for IRM if needed)
             labels = batch['labels']
 
-            # Compute loss
-            loss = self.supervised_loss(logits, labels)
-
-            # Add IRM penalty if time slices available
             if 'time_slices' in batch:
-                _, embeddings = self.model(batch, return_embeddings=True)
+                logits, embeddings = self.model(batch, return_embeddings=True)
+                # Compute main loss
+                loss = self.supervised_loss(logits, labels)
+                # Add IRM penalty
                 irm_penalty = self.irm_loss(
                     embeddings['fused'], labels, batch['time_slices']
                 )
                 loss = loss + 0.1 * irm_penalty
+            else:
+                logits = self.model(batch)
+                loss = self.supervised_loss(logits, labels)
 
             # Backward pass
             self.optimizer.zero_grad()

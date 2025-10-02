@@ -174,7 +174,7 @@ class TabularTransformerTower(nn.Module):
 
         # Positional encoding for features
         self.pos_embedding = nn.Parameter(
-            torch.randn(1, self.num_features + 1, embedding_dim)  # +1 for time token
+            torch.randn(1, self.num_features + 2, embedding_dim)  # +2 for cls and time tokens
         )
 
         # CLS token for global representation
