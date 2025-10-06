@@ -194,3 +194,81 @@ class CatBoostBaseline(MLBaseline):
 
     def predict(self, test_data):
         return self.model.predict_proba(test_data)[:, 1]
+
+
+class MLBaselines:
+    """Wrapper class for training and evaluating multiple ML baselines."""
+
+    def __init__(self, use_gpu=False):
+        self.use_gpu = use_gpu
+        self.models = {}
+
+    def train_and_evaluate(self, X_train, y_train, X_test, y_test):
+        """Train and evaluate all available baselines."""
+        from sklearn.metrics import roc_auc_score, average_precision_score, f1_score
+        from time import time
+
+        results = {}
+
+        # Calculate scale_pos_weight
+        scale_pos_weight = (y_train == 0).sum() / (y_train == 1).sum()
+
+        # List of baseline models
+        baseline_configs = [
+            ('Logistic Regression', LogisticRegressionBaseline()),
+            ('Random Forest', RandomForestBaseline(n_estimators=100, max_depth=10))
+        ]
+
+        if LIGHTGBM_AVAILABLE:
+            baseline_configs.append(
+                ('LightGBM', LightGBMBaseline(n_estimators=100, max_depth=6,
+                                              scale_pos_weight=scale_pos_weight))
+            )
+
+        if XGBOOST_AVAILABLE:
+            baseline_configs.append(
+                ('XGBoost', XGBoostBaseline(n_estimators=100, max_depth=6,
+                                           scale_pos_weight=scale_pos_weight,
+                                           use_gpu=self.use_gpu))
+            )
+
+        if CATBOOST_AVAILABLE:
+            baseline_configs.append(
+                ('CatBoost', CatBoostBaseline(n_estimators=100, max_depth=6,
+                                             scale_pos_weight=scale_pos_weight,
+                                             use_gpu=self.use_gpu))
+            )
+
+        # Train and evaluate each model
+        for name, model in baseline_configs:
+            print(f"\nTraining {name}...")
+            start_time = time()
+
+            # Train
+            model.train(X_train, y_train)
+
+            # Predict
+            y_pred_proba = model.predict(X_test)
+            y_pred = (y_pred_proba > 0.5).astype(int)
+
+            # Compute metrics
+            roc_auc = roc_auc_score(y_test, y_pred_proba)
+            auprc = average_precision_score(y_test, y_pred_proba)
+            f1 = f1_score(y_test, y_pred, zero_division=0)
+
+            train_time = time() - start_time
+
+            results[name] = {
+                'roc_auc': float(roc_auc),
+                'auprc': float(auprc),
+                'f1': float(f1),
+                'train_time': float(train_time)
+            }
+
+            print(f"  ROC-AUC: {roc_auc:.4f}, AUPRC: {auprc:.4f}, F1: {f1:.4f}, "
+                  f"Time: {train_time:.2f}s")
+
+            # Store model
+            self.models[name] = model
+
+        return results
