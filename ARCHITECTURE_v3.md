@@ -171,27 +171,42 @@ Result: 15 raw features → 40+ engineered features
 - **Secondary**: AUPRC (better for imbalanced data)
 - **Tertiary**: F1 Score (with optimal threshold tuning)
 
-## Results (To Be Updated)
+## Experimental Results
 
-### IEEE-CIS Dataset
+### IEEE-CIS Dataset (50K samples)
 
-| Model | ROC-AUC | AUPRC | F1 Score |
-|-------|---------|-------|----------|
-| XGBoost (baseline) | 0.8790 | 0.4447 | 0.2420 |
-| LightGBM (best) | 0.8800 | 0.4317 | 0.2308 |
-| **STREAM-FraudX Research** | **TBD** | **TBD** | **TBD** |
+| Model | ROC-AUC | AUPRC | F1 Score | Time |
+|-------|---------|-------|----------|------|
+| XGBoost (baseline) | **0.8730** | 0.4535 | 0.2295 | 0.31s |
+| LightGBM | 0.8598 | 0.4188 | 0.2197 | 0.51s |
+| CatBoost | 0.8666 | 0.4114 | 0.1828 | 0.98s |
+| Random Forest | 0.8459 | 0.4583 | 0.3697 | 0.46s |
+| **STREAM-FraudX Research** | **0.7497** | **0.2643** | **0.2684** | **42.62s** |
 
-**Target**: Beat 0.8800 (LightGBM)
+**Result**: ❌ Below XGBoost by 14.13% (-0.1233 absolute)
 
-### PaySim Dataset
+### PaySim Dataset (50K samples)
 
-| Model | ROC-AUC | AUPRC | F1 Score |
-|-------|---------|-------|----------|
-| Random Forest (best) | 0.9925 | 0.8311 | 0.9000 |
-| XGBoost | 0.9731 | 0.8197 | 0.8421 |
-| **STREAM-FraudX Research** | **TBD** | **TBD** | **TBD** |
+| Model | ROC-AUC | AUPRC | F1 Score | Time |
+|-------|---------|-------|----------|------|
+| Random Forest | 1.0000 | 1.0000 | 0.9474 | 0.53s |
+| XGBoost | 1.0000 | 1.0000 | 1.0000 | 0.15s |
+| CatBoost | 1.0000 | 1.0000 | 1.0000 | 0.79s |
+| **STREAM-FraudX Research** | **0.9982** | **0.4624** | **0.3684** | **25.68s** |
 
-**Target**: Beat 0.9925 (Random Forest)
+**Result**: ❌ Below baselines by 0.18% (baselines show overfitting on small sample)
+
+### Analysis
+
+**Why the Model Underperforms:**
+
+1. **Single-Transaction Input**: The current implementation uses `STREAMFraudXResearchSimple` which processes single transactions, not sequences. This **completely ignores the temporal attention and multi-scale LSTM components** that are the core novel contributions.
+
+2. **Insufficient Data**: 50K samples may be too small for deep learning to outperform gradient boosting.
+
+3. **Feature Engineering Mismatch**: The baselines benefit from 15→35 engineered features, while the deep model may need raw sequential data to learn temporal patterns.
+
+**What We Actually Tested**: A simple 3-layer MLP (51,329 parameters) vs. XGBoost - this is NOT testing our novel architecture at all!
 
 ## Future Work
 

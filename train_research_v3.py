@@ -204,7 +204,7 @@ def train_model(
     criterion = FocalLoss(alpha=0.25, gamma=2.0)
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=0.01)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='max', factor=0.5, patience=5, verbose=True
+        optimizer, mode='max', factor=0.5, patience=5
     )
 
     # Training loop
