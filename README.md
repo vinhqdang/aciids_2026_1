@@ -1,17 +1,28 @@
-# STREAM-FraudX: Novel Deep Learning Architecture for Fraud Detection
+# STREAM-FraudX: Production-Ready Fraud Detection System
 
-**Temporal-Aware Attention and Multi-Scale Feature Extraction for Sequential Fraud Detection**
+**Label-Efficient Streaming Fraud Detection with Temporal Graph Attention**
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-## Quick Summary
+## Overview
 
-STREAM-FraudX is a **novel deep learning architecture** for fraud detection that combines:
-1. **Time-decay attention mechanism** emphasizing recent transactions
-2. **Multi-scale feature extraction** (CNN + LSTM) at micro/meso/macro scales
-3. **Sequential modeling** of transaction patterns over time
+STREAM-FraudX is a **production-ready fraud detection system** featuring:
 
-**Research Contribution**: First work to incorporate learnable temporal decay into attention mechanisms for financial fraud detection.
+### 🎯 Core Architecture (v4)
+1. **Enhanced Temporal Graph Tower** - Recency-weighted attention + hot-node caching
+2. **Feature-Gated Tabular Tower** - FT-Transformer with adaptive feature selection
+3. **FiLM Fusion Module** - Bidirectional cross-modal conditioning
+4. **Advanced Loss Functions** - Combined focal loss with IRM penalties
+
+### 🔬 Research Contributions
+- **Recency-weighted attention** for temporal graph neural networks
+- **Feature gating mechanisms** for tabular transformers
+- **FiLM-style modulation** for cross-modal fusion
+- **Unified experiment framework** for reproducible research
 
 ### Novel Architecture Results (5K sequences)
 
@@ -67,32 +78,48 @@ pip install -r requirements.txt
 
 ## Quick Start
 
-### Option 1: Train Ensemble Model (Recommended)
+### Single Command (Recommended)
+
+Run the complete experiment pipeline:
 
 ```bash
-# Train on both datasets with 30K samples
-python train_ensemble_v3.py --num_samples 30000
+./run_all.sh
 ```
 
-**Output**: Stacking ensemble combining Random Forest, LightGBM, XGBoost, and CatBoost
+This executes:
+1. Environment setup and dependency installation
+2. Baseline model training (Random Forest, XGBoost)
+3. STREAM-FraudX neural model training
+4. Report generation and artifact storage
 
-### Option 2: Train Optimized Random Forest
+### Custom Experiments
 
+**Train STREAM-FraudX (Enhanced v2):**
 ```bash
-# Train with advanced feature engineering and larger sample
-python train_optimized_v3.py --num_samples 100000
+python -m experiments.driver \
+    --experiment_name "streamfraudx_v2" \
+    --model_type "stream_fraudx" \
+    --dataset "synthetic" \
+    --num_samples 10000 \
+    --epochs 30 \
+    --batch_size 64 \
+    --lr 0.001 \
+    --seed 42
 ```
 
-**Output**: Optimized Random Forest with 500 trees and engineered features
-
-### Option 3: Full Deep Learning Pipeline
-
+**Train Baseline Models:**
 ```bash
-# Train STREAM-FraudX dual-tower architecture
-python train_v3.py --num_samples 20000 --epochs 20
+python -m experiments.driver \
+    --experiment_name "baseline_xgboost" \
+    --model_type "xgboost" \
+    --dataset "synthetic" \
+    --num_samples 10000
 ```
 
-**Output**: Temporal Graph + Tabular Transformer with cross-attention fusion
+**Use Configuration Files:**
+```bash
+python -m experiments.driver --config configs/my_experiment.yaml
+```
 
 ---
 
@@ -120,34 +147,41 @@ python train_v3.py --num_samples 20000 --epochs 20
 
 ```
 aciids_2026_1/
-├── train_ensemble_v3.py          # Stacking ensemble (main)
-├── train_optimized_v3.py         # Optimized Random Forest
-├── train_v3.py                   # Full deep learning pipeline
+├── experiments/                  # 🆕 Unified experiment framework
+│   ├── driver.py                # Main experiment runner
+│   ├── logger.py                # Structured logging (JSON/CSV)
+│   ├── config.py                # Configuration system
+│   └── utils.py                 # Seed management, device config
 ├── stream_fraudx/
 │   ├── models/
-│   │   ├── stream_fraudx.py              # Dual-tower architecture
-│   │   ├── temporal_graph_tower.py       # Graph neural network
-│   │   ├── tabular_transformer_tower.py  # Tabular transformer
-│   │   └── fusion.py                     # Cross-attention fusion
-│   ├── losses/
-│   │   ├── focal_losses.py               # Imbalance-aware losses
-│   │   ├── irm_loss.py                   # Invariant risk minimization
-│   │   └── pretraining_losses.py         # Self-supervised losses
+│   │   ├── temporal_graph_tower_v2.py   # 🆕 Enhanced with attention
+│   │   ├── tabular_transformer_tower_v2.py  # 🆕 Feature gating
+│   │   ├── fusion_v2.py         # 🆕 FiLM modulation
+│   │   └── [v1 models...]       # Legacy baseline models
 │   ├── data/
-│   │   ├── ieee_cis_loader.py            # IEEE-CIS dataset
-│   │   ├── paysim_loader.py              # PaySim dataset
-│   │   └── module.py                     # Data pipeline
+│   │   ├── base_loader.py       # 🆕 Configurable data pipeline
+│   │   ├── encoders.py          # 🆕 Feature encoding registry
+│   │   ├── graph_cache.py       # 🆕 Graph windowing & caching
+│   │   └── [dataset loaders...] # IEEE-CIS, PaySim, Elliptic
+│   ├── losses/
+│   │   ├── combined_losses.py   # 🆕 Combined focal + IRM
+│   │   └── [other losses...]    # Focal, IRM, pretraining
 │   ├── baselines/
-│   │   └── ml_baselines.py               # ML baseline models
+│   │   └── ml_baselines.py      # Scikit-learn, XGBoost, etc.
 │   └── utils/
-│       └── metrics.py                    # Evaluation metrics
-├── data/                                 # Datasets
-│   ├── ieee-cis/
-│   └── paysim/
-├── outputs/                              # Results
-│   ├── ensemble_v3_results.json
-│   └── optimized_v3_results.json
-├── checkpoints/                          # Saved models
+│       └── metrics.py           # ROC-AUC, AUPRC, F1, etc.
+├── artifacts/                   # 🆕 Structured output
+│   ├── runs/<run_id>/           # Per-experiment artifacts
+│   │   ├── metrics.json         # Logged metrics
+│   │   ├── metrics.csv          # Tabular metrics
+│   │   ├── metadata.json        # Hyperparameters
+│   │   └── checkpoints/         # Model weights
+│   ├── preprocessing/           # Fitted encoders
+│   └── reports/                 # Generated reports
+├── docs/                        # 🆕 Documentation
+│   ├── experiments.md           # Experiment guide
+│   └── implementation_report.md # v4 changes
+├── run_all.sh                   # 🆕 Single-command execution
 └── requirements.txt
 ```
 
@@ -207,23 +241,49 @@ Parameters:
 
 ---
 
-## Training
+## Experiment Framework (v4)
 
-### Stacking Ensemble
+### Stage-Based Training Pipeline
 
-```bash
-python train_ensemble_v3.py --num_samples 30000
+**Stage A: Self-Supervised Pretraining** (Optional)
+- Contrastive learning on transaction sequences
+- Temporal ordering prediction
+- Masked feature reconstruction
+
+**Stage B: Supervised Training** (Main)
+- Neural models (STREAM-FraudX v1/v2)
+- Classical baselines (RF, XGBoost, LightGBM, CatBoost)
+- Full logging and checkpointing
+
+**Stage C: Streaming Adaptation** (Future)
+- Meta-learning for fast adaptation
+- Conformal prediction
+- Online drift detection
+
+### Reproducibility Features
+
+✅ **Deterministic Seeds**: All RNG sources controlled
+✅ **Structured Logging**: JSON + CSV metrics per-epoch
+✅ **Config Versioning**: Save/load experiment configs
+✅ **Artifact Management**: Checkpoints, preprocessing states, reports
+✅ **Resume Support**: Continue interrupted experiments
+
+### Viewing Results
+
+```python
+from experiments.logger import ExperimentLogger
+
+# List all experiments
+runs = ExperimentLogger.list_runs()
+
+# Load specific run
+logger = ExperimentLogger.load_run("run_20250109_120000")
+print(logger.summary())
+
+# Get best validation metric
+best = logger.get_best_metric('val_auprc', mode='max')
+print(f"Best AUPRC: {best['value']:.4f} at epoch {best['epoch']}")
 ```
-
-**Training time**: ~30 seconds (CPU)
-
-### Optimized Random Forest
-
-```bash
-python train_optimized_v3.py --num_samples 100000
-```
-
-**Training time**: ~2 minutes (CPU)
 
 ---
 

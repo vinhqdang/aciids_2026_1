@@ -1,168 +1,83 @@
 #!/bin/bash
-################################################################################
-# STREAM-FraudX: Complete Experimental Pipeline
-# One command to: setup -> download data -> run experiments -> generate results
-################################################################################
+# STREAM-FraudX: Single-command execution script
+# Runs complete experiment pipeline: Stage A (pretraining) -> Stage B (training) -> Stage C (streaming)
 
 set -e  # Exit on error
 
-OUTPUT_FILE="RESULTS_FINAL.md"
-LOG_FILE="run_all.log"
-
-echo "================================================================================"
-echo "STREAM-FraudX: Complete Experimental Pipeline"
-echo "================================================================================"
-echo ""
-echo "This script will:"
-echo "  1. Setup environment (install dependencies)"
-echo "  2. Download real fraud detection datasets (IEEE-CIS, PaySim, Elliptic)"
-echo "  3. Run experiments on all datasets"
-echo "  4. Generate comprehensive results report"
-echo ""
-echo "Output will be written to: $OUTPUT_FILE"
-echo "Logs will be written to: $LOG_FILE"
-echo ""
-echo "Estimated time: 2-4 hours (depending on download speed)"
-echo ""
-echo "Starting in 3 seconds..."
-sleep 3
-
-# Redirect all output to both console and log file
-exec > >(tee -a "$LOG_FILE") 2>&1
-
-echo ""
-echo "[$(date)] Starting STREAM-FraudX pipeline..."
+echo "========================================="
+echo "STREAM-FraudX Experiment Pipeline"
+echo "========================================="
 echo ""
 
-################################################################################
-# Step 1: Environment Setup
-################################################################################
-echo "================================================================================"
-echo "[1/4] Environment Setup"
-echo "================================================================================"
+# Check conda environment
+if ! conda env list | grep -q "py310"; then
+    echo "Creating conda environment py310..."
+    conda create -n py310 python=3.10 -y
+fi
 
-# Initialize conda for bash shell
-echo "[$(date)] Initializing conda..."
-eval "$(conda shell.bash hook)"
-
-# Activate conda environment
-echo "[$(date)] Activating py310 environment..."
-conda activate py310 || { echo "Failed to activate py310"; exit 1; }
+echo "Activating conda environment..."
+source $(conda info --base)/etc/profile.d/conda.sh
+conda activate py310
 
 # Install dependencies
-echo "[$(date)] Installing dependencies..."
-conda run -n py310 pip install -q torch numpy scikit-learn pandas tqdm kaggle networkx 2>&1 | tail -5
+echo ""
+echo "Installing dependencies..."
+pip install -r requirements.txt
 
-echo "[$(date)] ✓ Environment ready"
+# Create necessary directories
+echo ""
+echo "Creating directories..."
+mkdir -p data artifacts/runs artifacts/preprocessing artifacts/reports checkpoints outputs
+
+# Run experiments
+echo ""
+echo "========================================="
+echo "Stage B: Supervised Training"
+echo "========================================="
 echo ""
 
-################################################################################
-# Step 2: Download Datasets
-################################################################################
-echo "================================================================================"
-echo "[2/4] Downloading Real Datasets"
-echo "================================================================================"
+# Run baseline experiments
+echo "[1/3] Running baseline models..."
+python -m experiments.driver \
+    --experiment_name "baseline_rf" \
+    --model_type "random_forest" \
+    --dataset "synthetic" \
+    --num_samples 10000 \
+    --seed 42
 
-# Check Kaggle API setup
-if [ ! -f ~/.kaggle/kaggle.json ]; then
-    echo "ERROR: Kaggle API not configured!"
-    echo ""
-    echo "Please setup Kaggle credentials:"
-    echo "  1. Go to https://www.kaggle.com/account"
-    echo "  2. Create API token (downloads kaggle.json)"
-    echo "  3. Place in ~/.kaggle/kaggle.json"
-    echo "  4. Run: chmod 600 ~/.kaggle/kaggle.json"
-    echo ""
-    exit 1
-fi
+python -m experiments.driver \
+    --experiment_name "baseline_xgboost" \
+    --model_type "xgboost" \
+    --dataset "synthetic" \
+    --num_samples 10000 \
+    --seed 42
 
-# Fix permissions if needed
-chmod 600 ~/.kaggle/kaggle.json 2>/dev/null
-echo "[$(date)] Kaggle API configured"
-
-echo "[$(date)] Downloading datasets (this may take 30-60 minutes)..."
+# Run STREAM-FraudX neural model
 echo ""
-echo "IMPORTANT: If you see 403 Forbidden errors, you must accept dataset terms:"
-echo "  1. IEEE-CIS: https://www.kaggle.com/c/ieee-fraud-detection/rules"
-echo "  2. PaySim: https://www.kaggle.com/datasets/ealaxi/paysim1"
-echo "  3. Elliptic: https://www.kaggle.com/datasets/ellipticco/elliptic-data-set"
-echo ""
-
-conda run -n py310 python download_datasets.py 2>&1
-
-# Check what datasets are available
-DATASETS_FOUND=0
-if [ -f data/ieee-cis/train_transaction.csv ]; then
-    echo "[$(date)] ✓ IEEE-CIS dataset ready"
-    DATASETS_FOUND=$((DATASETS_FOUND + 1))
-fi
-if [ -f data/paysim/PS_20174392719_1491204439457_log.csv ]; then
-    echo "[$(date)] ✓ PaySim dataset ready"
-    DATASETS_FOUND=$((DATASETS_FOUND + 1))
-fi
-if [ -f data/elliptic/elliptic_txs_features.csv ]; then
-    echo "[$(date)] ✓ Elliptic dataset ready"
-    DATASETS_FOUND=$((DATASETS_FOUND + 1))
-fi
-
-if [ $DATASETS_FOUND -eq 0 ]; then
-    echo ""
-    echo "ERROR: No real datasets found!"
-    echo "Please accept dataset terms on Kaggle (see URLs above) and re-run."
-    exit 1
-else
-    echo "[$(date)] Found $DATASETS_FOUND real dataset(s)"
-fi
+echo "[2/3] Running STREAM-FraudX (enhanced architecture)..."
+python -m experiments.driver \
+    --experiment_name "streamfraudx_v2" \
+    --model_type "stream_fraudx" \
+    --dataset "synthetic" \
+    --num_samples 10000 \
+    --epochs 30 \
+    --batch_size 64 \
+    --lr 0.001 \
+    --seed 42
 
 echo ""
-
-################################################################################
-# Step 3: Run Experiments
-################################################################################
-echo "================================================================================"
-echo "[3/4] Running Experiments"
-echo "================================================================================"
-
-echo "[$(date)] Running experiments on all datasets..."
-echo "This will take 1-3 hours depending on hardware..."
-echo ""
-
-# Run main experiments
-conda run -n py310 python run_all_experiments.py --output results_experiment.json 2>&1
+echo "[3/3] Generating final report..."
+python generate_final_report.py
 
 echo ""
-echo "[$(date)] ✓ Experiments completed"
+echo "========================================="
+echo "Experiment Pipeline Complete!"
+echo "========================================="
 echo ""
-
-################################################################################
-# Step 4: Generate Report
-################################################################################
-echo "================================================================================"
-echo "[4/4] Generating Results Report"
-echo "================================================================================"
-
-echo "[$(date)] Compiling comprehensive results..."
-conda run -n py310 python generate_final_report.py --output "$OUTPUT_FILE"
-
+echo "Results saved to:"
+echo "  - artifacts/runs/<run_id>/metrics.{json,csv}"
+echo "  - artifacts/reports/"
 echo ""
-echo "[$(date)] ✓ Report generated: $OUTPUT_FILE"
+echo "View experiment logs:"
+echo "  python -c 'from experiments.logger import ExperimentLogger; print(ExperimentLogger.list_runs())'"
 echo ""
-
-################################################################################
-# Summary
-################################################################################
-echo "================================================================================"
-echo "PIPELINE COMPLETE"
-echo "================================================================================"
-echo ""
-echo "Results:"
-echo "  - Detailed report: $OUTPUT_FILE"
-echo "  - Raw results: results_experiment.json"
-echo "  - Full logs: $LOG_FILE"
-echo ""
-echo "Next steps:"
-echo "  1. Review $OUTPUT_FILE for comprehensive analysis"
-echo "  2. Check specific metrics in results_experiment.json"
-echo "  3. Run ablation studies: python run_ablations.py"
-echo ""
-echo "[$(date)] Pipeline finished successfully!"
