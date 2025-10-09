@@ -176,23 +176,54 @@ class ExperimentLogger:
     def _save_metadata(self):
         """Save metadata to disk."""
         metadata_file = self.run_dir / "metadata.json"
+
+        # Convert numpy types to native Python types for JSON serialization
+        def convert_to_json_serializable(obj):
+            if isinstance(obj, dict):
+                return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_json_serializable(item) for item in obj]
+            elif isinstance(obj, (np.integer, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float64)):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            else:
+                return obj
+
         with open(metadata_file, 'w') as f:
             json.dump({
-                'metadata': self.metadata,
-                'hyperparameters': self.hyperparameters,
-                'artifacts': self.artifacts
+                'metadata': convert_to_json_serializable(self.metadata),
+                'hyperparameters': convert_to_json_serializable(self.hyperparameters),
+                'artifacts': convert_to_json_serializable(self.artifacts)
             }, f, indent=2)
 
     def _save_metrics(self):
         """Save metrics to JSON and CSV."""
+        # Convert numpy types to native Python types
+        def convert_to_json_serializable(obj):
+            if isinstance(obj, dict):
+                return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_json_serializable(item) for item in obj]
+            elif isinstance(obj, (np.integer, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float64)):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            else:
+                return obj
+
         # Save JSON
         metrics_json = self.run_dir / "metrics.json"
         with open(metrics_json, 'w') as f:
             json.dump({
-                'metadata': self.metadata,
-                'hyperparameters': self.hyperparameters,
-                'artifacts': self.artifacts,
-                'metrics': self.metrics
+                'metadata': convert_to_json_serializable(self.metadata),
+                'hyperparameters': convert_to_json_serializable(self.hyperparameters),
+                'artifacts': convert_to_json_serializable(self.artifacts),
+                'metrics': convert_to_json_serializable(self.metrics)
             }, f, indent=2)
 
         # Save CSV (flattened metrics)

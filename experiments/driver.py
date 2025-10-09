@@ -22,8 +22,6 @@ from .utils import set_seed, get_device, count_parameters, worker_init_fn
 
 from stream_fraudx.models.stream_fraudx import STREAMFraudX, STREAMFraudXConfig
 from stream_fraudx.data.synthetic_data import SyntheticFraudDataset, collate_fn
-from stream_fraudx.data.ieee_cis_loader import load_ieee_cis_data
-from stream_fraudx.data.paysim_loader import load_paysim_data
 from stream_fraudx.baselines.ml_baselines import (
     RandomForestBaseline, LogisticRegressionBaseline,
     LightGBMBaseline, XGBoostBaseline, CatBoostBaseline
@@ -143,23 +141,9 @@ class ExperimentDriver:
                 worker_init_fn=worker_fn
             )
 
-        elif dataset_name == "ieee-cis":
-            # Load IEEE-CIS data
-            train_data, test_data = load_ieee_cis_data(
-                data_dir="data/ieee-cis",
-                num_samples=self.config.data.num_samples
-            )
-            # TODO: Implement proper DataLoader for IEEE-CIS
-            raise NotImplementedError("IEEE-CIS data loading not yet implemented in driver")
-
-        elif dataset_name == "paysim":
-            # Load PaySim data
-            train_data, test_data = load_paysim_data(
-                data_dir="data/paysim",
-                num_samples=self.config.data.num_samples
-            )
-            # TODO: Implement proper DataLoader for PaySim
-            raise NotImplementedError("PaySim data loading not yet implemented in driver")
+        elif dataset_name in ["ieee-cis", "paysim", "elliptic"]:
+            # TODO: Implement proper DataLoader for real datasets
+            raise NotImplementedError(f"{dataset_name} data loading not yet implemented in driver. Use 'synthetic' for now.")
 
         else:
             raise ValueError(f"Unknown dataset: {dataset_name}")
